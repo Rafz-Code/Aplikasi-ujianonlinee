@@ -1,0 +1,69 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: users
+    // Document ID: {username}
+    // Fields:
+    //   - username: string (required)
+    //   - password: string (required)
+    //   - name: string (required)
+    //   - role: string (required, enum: siswa, guru, admin)
+    //   - major: string (optional)
+    //   - createdAt: timestamp (required)
+    //
+    // Collection: exam_results
+    // Document ID: {resultId}
+    // Fields:
+    //   - username: string (required)
+    //   - score: number (required)
+    //   - totalQuestions: number (required)
+    //   - wrongAnswers: number (required)
+    //   - major: string (required)
+    //   - status: string (required, enum: LULUS, TIDAK LULUS)
+    //   - completedAt: timestamp (required)
+    //
+    // ===============================================================
+
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && 
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+         request.auth.token.email == "venzyajsb@gmail.com");
+    }
+
+    function isValidUser(data) {
+      return data.username is string && data.username.size() >= 3 && data.username.size() <= 30 &&
+             data.password is string && data.password.size() >= 4 &&
+             data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
+             data.role in ['siswa', 'guru', 'admin'];
+    }
+
+    function isValidResult(data) {
+      return data.username is string &&
+             data.score is number && data.score >= 0 &&
+             data.totalQuestions is number && data.totalQuestions > 0 &&
+             data.status in ['LULUS', 'TIDAK LULUS'];
+    }
+
+    // Rules
+    match /users/{username} {
+      allow read: if true; // Allow reading for login check
+      allow create: if isValidUser(request.resource.data);
+      allow update: if isAdmin();
+    }
+
+    match /exam_results/{resultId} {
+      allow read: if true; // Allow public results (or restrict to admin later)
+      allow create: if isValidResult(request.resource.data);
+      allow update, delete: if isAdmin();
+    }
+  }
+}

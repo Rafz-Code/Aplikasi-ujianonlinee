@@ -1,0 +1,43 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User account for the exam system",
+      "type": "object",
+      "properties": {
+        "username": { "type": "string", "description": "Unique username" },
+        "password": { "type": "string", "description": "Hashed or plain password (for demo)" },
+        "name": { "type": "string", "description": "Full name of the user" },
+        "role": { "type": "string", "enum": ["siswa", "guru", "admin"], "description": "User role" },
+        "major": { "type": "string", "description": "Student's major" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["username", "password", "name", "role"]
+    },
+    "ExamResult": {
+      "title": "Exam Result",
+      "description": "Result of a completed exam",
+      "type": "object",
+      "properties": {
+        "username": { "type": "string" },
+        "score": { "type": "number" },
+        "totalQuestions": { "type": "number" },
+        "wrongAnswers": { "type": "number" },
+        "major": { "type": "string" },
+        "status": { "type": "string", "enum": ["LULUS", "TIDAK LULUS"] },
+        "completedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["username", "score", "totalQuestions", "status", "completedAt"]
+    }
+  },
+  "firestore": {
+    "/users/{username}": {
+      "schema": "User",
+      "description": "User profiles"
+    },
+    "/exam_results/{resultId}": {
+      "schema": "ExamResult",
+      "description": "Exam performance records"
+    }
+  }
+}
